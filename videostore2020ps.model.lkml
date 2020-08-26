@@ -25,4 +25,14 @@ explore: rental {
     relationship: one_to_one
     sql_on: ${payment.rental_id} = ${rental.rental_id} ;;
   }
+
+  join: customer {
+    relationship: many_to_one
+    sql_on: ${customer.customer_id}=${rental.customer_id} ;;
+  }
+
+  join: customer_facts {
+    relationship: one_to_one
+    sql_on: ${customer.customer_id} = ${customer_facts.customer_id} ;;
+  }
 }
