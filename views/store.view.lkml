@@ -8,6 +8,12 @@ view: store {
     sql: ${TABLE}.store_id ;;
   }
 
+  dimension: store_name {
+    type: string
+    sql: CASE WHEN ${store_id} = 1 then "Store A"
+              WHEN ${store_id} = 2 then "Store B" END;;
+  }
+
   dimension: address_id {
     type: number
     sql: ${TABLE}.address_id ;;
