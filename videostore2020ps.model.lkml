@@ -19,6 +19,8 @@ include: "/views/*.view.lkml"                # include all views in the views/ f
 #   }
 # }
 
+persist_for: "48 hours"
+
 explore: rental {
   join: payment {
     type: left_outer
@@ -34,6 +36,11 @@ explore: rental {
   join: customer_facts {
     relationship: one_to_one
     sql_on: ${customer.customer_id} = ${customer_facts.customer_id} ;;
+  }
+
+  join: customer_lifetime_value {
+    relationship: one_to_one
+    sql_on: ${rental.rental_id} = ${customer_lifetime_value.rental_id}  ;;
   }
 
   join: store {
@@ -67,6 +74,24 @@ explore: rental {
     view_label: "Film"
     relationship: many_to_one
     sql_on: ${film_category.category_id} = ${category.category_id} ;;
+  }
+
+  join: address {
+    view_label: "Customer"
+    relationship: one_to_one
+    sql_on: ${customer.address_id} = ${address.address_id} ;;
+  }
+
+  join: city {
+    view_label: "Customer"
+    relationship: many_to_one
+    sql_on: ${address.city_id} = ${city.city_id} ;;
+  }
+
+  join: country {
+    view_label: "Customer"
+    relationship: many_to_one
+    sql_on: ${city.country_id} = ${country.country_id} ;;
   }
 
 }

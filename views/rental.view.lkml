@@ -2,6 +2,9 @@ view: rental {
   sql_table_name: sakila.rental ;;
   drill_fields: [rental_id]
 
+
+###################### Native Dimensions #####################
+
   dimension: rental_id {
     primary_key: yes
     type: number
@@ -47,59 +50,6 @@ view: rental {
     sql: ${TABLE}.rental_date ;;
   }
 
-  dimension: days_as_customer {
-    type: number
-    sql: datediff(${rental_date},${customer_facts.first_rental_date_date}) ;;
-  }
-
-  measure: average_days_to_reach_100_LTV {
-    label: "Average Days to Reach 100 Dollars in Lifetime Value"
-    type: average
-    sql: ${days_as_customer} ;;
-    filters: {
-      field: payment.crosses_100_LTV_threshold
-      value: "Yes"
-    }
-    value_format_name: decimal_1
-  }
-
-  measure: average_days_to_reach_150_LTV {
-    label: "Average Days to Reach 150 Dollars in Lifetime Value"
-    type: average
-    sql: ${days_as_customer} ;;
-    filters: {
-      field: payment.crosses_150_LTV_threshold
-      value: "Yes"
-    }
-    value_format_name: decimal_1
-  }
-
-  measure: average_days_to_reach_200_LTV {
-    label: "Average Days to Reach 200 Dollars in Lifetime Value"
-    type: average
-    sql: ${days_as_customer} ;;
-    filters: {
-      field: payment.crosses_200_LTV_threshold
-      value: "Yes"
-    }
-    value_format_name: decimal_1
-  }
-
-  measure: average_days_to_reach_250_LTV {
-    label: "Average Days to Reach 250 Dollars in Lifetime Value"
-    type: average
-    sql: ${days_as_customer} ;;
-    filters: {
-      field: payment.crosses_250_LTV_threshold
-      value: "Yes"
-    }
-    value_format_name: decimal_1
-  }
-
-  dimension: due_date {
-    type: date
-    sql: DATE_ADD(${rental_date}, INTERVAL 8 DAY) ;;
-  }
 
   dimension_group: return {
     type: time
@@ -115,22 +65,94 @@ view: rental {
     sql: ${TABLE}.return_date ;;
   }
 
+  dimension: staff_id {
+    type: yesno
+    sql: ${TABLE}.staff_id ;;
+  }
 
+
+###################### Derived Dimensions #####################
+
+
+  dimension: days_as_customer {
+    type: number
+    sql: datediff(${rental_date},${customer_facts.first_rental_date_date}) ;;
+  }
+
+  dimension: due_date {
+    type: date
+    sql: DATE_ADD(${rental_date}, INTERVAL 8 DAY) ;;
+  }
 
   dimension: is_late {
     type: yesno
     sql: ${return_date} > ${due_date} OR (${return_date} is null and ${due_date}>'2006-02-21') ;;
   }
 
-  dimension: days_late {
+  dimension: number_of_days_late {
     type: number
     sql: CASE WHEN ${is_late} = "No" THEN 0
-          ELSE datediff(${return_date},${due_date}) END ;;
+      ELSE datediff(${return_date},${due_date}) END ;;
+  }
+
+
+###################### Derived Measures #####################
+
+
+  measure: average_days_to_reach_100_LTV {
+    label: "Average Days to Reach 100 Dollars in Lifetime Value"
+    type: average
+    sql: ${days_as_customer} ;;
+    filters: {
+      field: customer_lifetime_value.crosses_100_LTV_threshold
+      value: "Yes"
+    }
+    value_format_name: decimal_1
+    drill_fields: [customer_id, rental_date, film.title, film.category, payment.amount, customer_lifetime_value.user_rental_running_total]
+
+  }
+
+  measure: average_days_to_reach_150_LTV {
+    label: "Average Days to Reach 150 Dollars in Lifetime Value"
+    type: average
+    sql: ${days_as_customer} ;;
+    filters: {
+      field: customer_lifetime_value.crosses_150_LTV_threshold
+      value: "Yes"
+    }
+    value_format_name: decimal_1
+    drill_fields: [customer_id, rental_date, film.title, film.category, payment.amount, customer_lifetime_value.user_rental_running_total]
+
+  }
+
+  measure: average_days_to_reach_200_LTV {
+    label: "Average Days to Reach 200 Dollars in Lifetime Value"
+    type: average
+    sql: ${days_as_customer} ;;
+    filters: {
+      field: customer_lifetime_value.crosses_200_LTV_threshold
+      value: "Yes"
+    }
+    value_format_name: decimal_1
+    drill_fields: [customer_id, rental_date, film.title, film.category, payment.amount, customer_lifetime_value.user_rental_running_total]
+
+  }
+
+  measure: average_days_to_reach_250_LTV {
+    label: "Average Days to Reach 250 Dollars in Lifetime Value"
+    type: average
+    sql: ${days_as_customer} ;;
+    filters: {
+      field: customer_lifetime_value.crosses_250_LTV_threshold
+      value: "Yes"
+    }
+    value_format_name: decimal_1
+    drill_fields: [customer_id, rental_date, film.title, film.category, payment.amount, customer_lifetime_value.user_rental_running_total]
   }
 
   measure: average_days_late {
     type: average
-    sql: ${days_late} ;;
+    sql: ${number_of_days_late} ;;
     value_format_name: decimal_1
   }
 
@@ -150,14 +172,10 @@ view: rental {
     drill_fields: [rental_id, rental_date, film.title, payment.amount]
   }
 
-  dimension: staff_id {
-    type: yesno
-    sql: ${TABLE}.staff_id ;;
-  }
 
   measure: count {
     label: "Count of Rentals"
     type: count
-    drill_fields: [rental_id, customer.first_name, customer.last_name, customer.customer_id, payment.count]
+    drill_fields: [rental_id, rental_date, customer.full_name, customer.email, film.title, payment.amount, number_of_days_late]
   }
 }

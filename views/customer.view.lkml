@@ -139,11 +139,9 @@ view: customer {
   set: detail {
     fields: [
       customer_id,
-      first_name,
-      last_name,
+      full_name,
       email,
-      store.store_id,
-      payment.count,
+      customer_facts.lifetime_value,
       rental.count
     ]
   }

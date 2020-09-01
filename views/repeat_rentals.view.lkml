@@ -14,12 +14,11 @@ view: repeat_rentals {
       GROUP BY 1,2,3
       order by 1,2 asc
       ;;
+
+    indexes: ["customer_id"]
   }
 
-  measure: count {
-    type: count
-    drill_fields: [detail*]
-  }
+  ###################### Native PDT Dimensions #####################
 
   dimension: customer_id {
     type: number
@@ -41,22 +40,51 @@ view: repeat_rentals {
     sql: ${TABLE}.next_rental_date ;;
   }
 
+  dimension: running_total_of_rentals {
+    type: number
+    sql: ${TABLE}.rank ;;
+  }
+
+  dimension: next_rental_id {
+    type: number
+    sql: ${TABLE}.next_rental_id ;;
+  }
+
+  dimension: number_of_subsequent_rentals {
+    type: number
+    sql: ${TABLE}.number_of_subsequent_rentals ;;
+  }
+
+  measure: count {
+    type: count
+    drill_fields: [customer_info*]
+  }
+
+
+###################### Derived Dimensions #####################
+
+
   dimension: days_until_next_rental {
     type: number
     sql: datediff(${next_rental_date_date},${rental_date_date}) ;;
   }
 
-  measure: average_days_until_next_rental {
-    type: average
-    sql: ${days_until_next_rental} ;;
-    value_format_name: decimal_1
-  }
 
   dimension: days_until_next_rental_tier {
     type: tier
     sql: ${days_until_next_rental} ;;
     tiers: [30,60,90]
     style: integer
+  }
+
+
+###################### Derived Measures #####################
+
+
+  measure: average_days_until_next_rental {
+    type: average
+    sql: ${days_until_next_rental} ;;
+    value_format_name: decimal_1
   }
 
   measure: count_under_30_days {
@@ -139,21 +167,6 @@ view: repeat_rentals {
     value_format_name: percent_1
   }
 
-  dimension: next_rental_id {
-    type: number
-    sql: ${TABLE}.next_rental_id ;;
-  }
-
-  dimension: number_of_subsequent_rentals {
-    type: number
-    sql: ${TABLE}.number_of_subsequent_rentals ;;
-  }
-
-  dimension: running_total_of_rentals {
-    type: number
-    sql: ${TABLE}.rank ;;
-  }
-
   measure: avg_total_rentals {
     label: "Average Running Count of Rentals"
     type: average
@@ -166,11 +179,22 @@ view: repeat_rentals {
     type: average
     sql: ${running_total_of_rentals} ;;
     filters: {
-      field: payment.crosses_100_LTV_threshold
+      field: customer_lifetime_value.crosses_100_LTV_threshold
       value: "Yes"
     }
+    drill_fields: [customer_id, rental.rental_date, film.title, film.category, payment.amount, customer_lifetime_value.user_rental_running_total]
     value_format_name: decimal_1
   }
+
+  measure: average_number_of_subsequent_rentals {
+    type: average
+    sql: ${number_of_subsequent_rentals} ;;
+    value_format_name: decimal_1
+  }
+
+
+###################### Sets #####################
+
 
   set: detail {
     fields: [
@@ -180,6 +204,17 @@ view: repeat_rentals {
       next_rental_date_time,
       next_rental_id,
       number_of_subsequent_rentals
+    ]
+  }
+
+  set: customer_info {
+    fields: [
+      customer_id,
+      customer.full_name,
+      customer.email,
+      customer_facts.first_rental_date,
+      customer_facts.days_as_customer,
+      customer_facts.lifetime_value
     ]
   }
 }

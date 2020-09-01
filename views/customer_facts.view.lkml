@@ -48,7 +48,7 @@ view: customer_facts {
   dimension: rental_count {
     label: "Number of Rentals"
     type: number
-    sql: ${TABLE}.`rental.count` ;;
+    sql: ${TABLE}.rental_count ;;
   }
 
   measure: total_rental_count {
@@ -68,6 +68,13 @@ view: customer_facts {
     type: number
     sql: ${TABLE}.`payment.total_revenue` ;;
     value_format_name: usd
+  }
+
+  dimension: lifetime_value_tier {
+    type: tier
+    tiers: [25,50,75,100,125,150,175,200]
+    sql: ${lifetime_value} ;;
+    style: integer
   }
 
   measure: total_lifetime_value {

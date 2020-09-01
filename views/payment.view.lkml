@@ -70,55 +70,6 @@ view: payment {
     sql: ${TABLE}.staff_id ;;
   }
 
-  dimension: user_rental_running_total {
-    label: "Lifetime Value Running Total by Rental"
-    type: number
-    value_format_name: usd
-    sql: (
-          SELECT SUM(amount)
-          FROM payment p
-          WHERE p.payment_date <= ${TABLE}.payment_date
-          AND p.customer_id = ${TABLE}.customer_id
-          ) ;;
-  }
-
-  dimension: previous_user_rental_running_total {
-    hidden: yes
-    type: number
-    value_format_name: usd
-    sql: (
-          SELECT SUM(amount)
-          FROM payment p
-          WHERE p.payment_date < ${TABLE}.payment_date
-          AND p.customer_id = ${TABLE}.customer_id
-          ) ;;
-  }
-
-  dimension: crosses_100_LTV_threshold {
-    hidden: yes
-    type: yesno
-    sql: ${previous_user_rental_running_total} <100 and ${user_rental_running_total} >=100  ;;
-  }
-
-
-  dimension: crosses_150_LTV_threshold {
-    type: yesno
-    hidden: yes
-    sql: ${previous_user_rental_running_total} <150 and ${user_rental_running_total} >=150  ;;
-  }
-
-  dimension: crosses_200_LTV_threshold {
-    type: yesno
-    hidden: yes
-    sql: ${previous_user_rental_running_total} <200 and ${user_rental_running_total} >=200  ;;
-  }
-
-  dimension: crosses_250_LTV_threshold {
-    type: yesno
-    hidden: yes
-    sql: ${previous_user_rental_running_total} <250 and ${user_rental_running_total} >=250  ;;
-  }
-
 
   measure: count {
     type: count
